@@ -331,7 +331,91 @@ def bubbles():
     brand_footer(d,1290,dark=True,small=True)
     save(im,'08_quote_bubbles.png')
 
-for fn in [hero,notebook,excerpt,notes,brush,replica,stage,capsules,bubbles]: fn()
+# 9. Notebook reminder, matching the uploaded Indie Sleaze clipboard layout.
+def reminder():
+    src=Image.open(ROOT/'Indie Sleaze Aesthetic.jpeg').convert('RGB')
+    S=2; W,H=src.width*S,src.height*S
+    im=src.resize((W,H),Image.Resampling.LANCZOS)
+    def xy(v): return int(round(v*S))
+    def box(b): return tuple(xy(v) for v in b)
+    def F(name,size): return ImageFont.truetype(str(ROOT/'assets/fonts'/name),xy(size))
+    def rotated(txt, name, size, color, center, angle=10, anchor='mm', stroke=0, stroke_fill=None):
+        f=F(name,size); probe=ImageDraw.Draw(Image.new('RGBA',(1,1)))
+        bb=probe.textbbox((0,0),txt,font=f,stroke_width=stroke*S)
+        tw=bb[2]-bb[0]+xy(28); th=bb[3]-bb[1]+xy(28)
+        layer=Image.new('RGBA',(tw,th),(0,0,0,0)); ld=ImageDraw.Draw(layer)
+        ld.text((xy(14)-bb[0],xy(14)-bb[1]),txt,font=f,fill=color,stroke_width=stroke*S,stroke_fill=stroke_fill)
+        layer=layer.rotate(angle,resample=Image.Resampling.BICUBIC,expand=True)
+        im.alpha_composite(layer,(xy(center[0])-layer.width//2,xy(center[1])-layer.height//2))
+    # Remove the unwanted AI/QR block with a wood-grain patch sampled from the
+    # reference's own clean desktop, then make the area a small text-only reminder.
+    im=im.convert('RGBA')
+    wood=src.crop((0,0,400,66)).resize((xy(171),xy(150)),Image.Resampling.LANCZOS).convert('RGBA')
+    im.alpha_composite(wood,(xy(565),0))
+    # Re-cover original upper-left church branding with a clean SFC logo placement.
+    d=ImageDraw.Draw(im)
+    # Patch away the old church lockup with matching wood grain.
+    left_wood=src.crop((0,0,400,66)).resize((xy(345),xy(94)),Image.Resampling.LANCZOS).convert('RGBA')
+    wood_mask=Image.new('L',left_wood.size,0); ImageDraw.Draw(wood_mask).rounded_rectangle((xy(8),xy(8),left_wood.width-xy(8),left_wood.height-xy(8)),radius=xy(10),fill=255)
+    wood_mask=wood_mask.filter(ImageFilter.GaussianBlur(xy(7))); left_wood.putalpha(wood_mask)
+    im.alpha_composite(left_wood,(xy(20),xy(50)))
+    # subtle wood-grain strokes across the small top-right reminder field
+    d=ImageDraw.Draw(im)
+    for j in range(6):
+        yy=xy(18+j*21); d.line((xy(570),yy,xy(735),yy+xy(4)),fill=(95,57+j,35+j,100),width=xy(1))
+    # Notebook sheet, aligned to the original perspective; retain the clipboard border.
+    paper=(246,247,241,255)
+    page=Image.new('RGBA',(W,H),(0,0,0,0)); pd=ImageDraw.Draw(page)
+    pd.polygon([tuple(map(xy,p)) for p in [(0,236),(736,108),(736,883),(0,883)]],fill=paper)
+    im.alpha_composite(page)
+    d=ImageDraw.Draw(im)
+    # Notebook ruling and red margin are kept on the same diagonal as the reference.
+    for y in range(327,895,38):
+        d.line((xy(82),xy(y),xy(735),xy(y-137)),fill=(196,205,194,255),width=xy(1))
+    d.line((xy(73),xy(329),xy(158),xy(883)),fill=(197,112,115,255),width=xy(2))
+    for i,(hx,hy) in enumerate([(60,389),(76,506),(92,622),(109,740),(126,850)]):
+        r=xy(10)
+        d.ellipse((xy(hx)-r,xy(hy)-r,xy(hx)+r,xy(hy)+r),fill=(238,239,233,255),outline=(171,175,169,255),width=xy(2))
+        d.ellipse((xy(hx)-xy(3),xy(hy)-xy(3),xy(hx)+xy(3),xy(hy)+xy(3)),fill=(214,216,210,255))
+    # Restore the isolated original clamp over the fresh ruled sheet.
+    clip=Image.open(ROOT/'assets/template_clip.png').convert('RGBA').resize((W,H),Image.Resampling.LANCZOS)
+    im.alpha_composite(clip,(0,0))
+    # SFC logo: transparent near-white pixels so it sits naturally on the wood.
+    logo=Image.open(ROOT/'SFC LOGO.jpg').convert('RGBA').crop((70,205,660,500))
+    pix=logo.load()
+    for yy in range(logo.height):
+        for xx in range(logo.width):
+            r,g,b,a=pix[xx,yy]
+            whiteness=min(r,g,b)
+            if whiteness>246 and max(r,g,b)-min(r,g,b)<12: pix[xx,yy]=(r,g,b,0)
+            elif whiteness>228 and max(r,g,b)-min(r,g,b)<18: pix[xx,yy]=(r,g,b,int(255*(246-whiteness)/18))
+    logo.thumbnail((xy(260),xy(82)),Image.Resampling.LANCZOS)
+    im.alpha_composite(logo,(xy(58),xy(68)))
+    # The former QR panel becomes a compact, text-only topic/date reminder.
+    d=ImageDraw.Draw(im)
+    d.text((xy(579),xy(20)),'TOPIC',font=F('oswald-bold.ttf',18),fill=(255,248,232,255),stroke_width=xy(1),stroke_fill=(45,28,20,255))
+    d.text((xy(579),xy(48)),'REMINDER',font=F('oswald-bold.ttf',22),fill=(255,248,232,255),stroke_width=xy(1),stroke_fill=(45,28,20,255))
+    d.text((xy(579),xy(84)),'15TH OCTOBER',font=F('montserrat-bold.ttf',12),fill=(255,248,232,255),stroke_width=xy(1),stroke_fill=(45,28,20,255))
+    # Original typographic hierarchy: condensed kicker, bold title, red script feature,
+    # compact note, minister name and date/time. No minister photograph is used.
+    rotated('IGNITE  •  TOPIC REMINDER','oswald-bold.ttf',18,(165,47,37,255),(270,284),angle=10)
+    rotated('THE GRACE','montserrat-black.ttf',48,(38,37,36,255),(346,374),angle=10)
+    rotated('CALLED HONOUR!','montserrat-black.ttf',47,(38,37,36,255),(353,443),angle=10)
+    rotated('A RETURN TO THE CULTURE OF HONOUR','montserrat-bold.ttf',21,(157,52,48,255),(354,504),angle=10)
+    rotated('Honour those who came before','lobster-regular.ttf',40,(185,48,45,255),(366,588),angle=10)
+    rotated('You cannot walk in the grace of honour','montserrat-regular.ttf',16,(45,45,45,255),(359,691),angle=10)
+    rotated('while cultivating a culture of dishonour.','montserrat-regular.ttf',16,(45,45,45,255),(365,723),angle=10)
+    rotated('MINISTER','lobster-regular.ttf',20,(186,56,52,255),(300,791),angle=10)
+    rotated('VERONICA SASHA','montserrat-bold.ttf',18,(35,35,35,255),(323,821),angle=10)
+    rotated('15TH OCTOBER 2026','montserrat-bold.ttf',16,(38,38,38,255),(623,782),angle=10)
+    rotated('10:00 PM','montserrat-black.ttf',26,(35,35,35,255),(620,817),angle=10)
+    rotated('STREET FOR CHRIST','montserrat-bold.ttf',10,(65,65,65,255),(325,855),angle=10)
+    # Red pen is retained as a stationery prop, extracted from the provided reference.
+    pen=Image.open(ROOT/'assets/template_pen.png').convert('RGBA').resize((xy(182),xy(315)),Image.Resampling.LANCZOS)
+    im.alpha_composite(pen,(xy(443),xy(549)))
+    im.convert('RGB').save(OUT/'10_ignite_veronica_sasha_topic_reminder.png',quality=95,optimize=True)
+
+for fn in [hero,notebook,excerpt,notes,brush,replica,stage,capsules,bubbles,reminder]: fn()
 
 # Preview sheet for easy review and a portable bundle for delivery.
 files=sorted(OUT.glob('*.png'))
@@ -342,7 +426,7 @@ for idx,f in enumerate(files):
     x=(idx%4)*thumb_w+(thumb_w-im.width)//2; y=(idx//4)*thumb_h+8
     sheet.paste(im,(x,y)); ImageDraw.Draw(sheet).text(((idx%4)*thumb_w+10,(idx//4+1)*thumb_h-26),f.stem,font=font(13,bold=True),fill=(35,35,35))
 sheet.save(OUT/'00_poster_overview.jpg',quality=90)
-# A print-friendly multipage PDF; each page keeps the square social-poster proportions.
+# A print-friendly multipage PDF; each page retains its template proportions.
 pages=[Image.open(f).convert('RGB') for f in files]
 pages[0].save(OUT/'Street_For_Christ_IGNITE_Posters.pdf',save_all=True,append_images=pages[1:],resolution=150)
 with zipfile.ZipFile(OUT/'Street_For_Christ_IGNITE_Posters.zip','w',zipfile.ZIP_DEFLATED) as z:
