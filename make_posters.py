@@ -355,14 +355,10 @@ def reminder():
     # Re-cover original upper-left church branding with a clean SFC logo placement.
     d=ImageDraw.Draw(im)
     # Patch away the old church lockup with matching wood grain.
-    left_wood=src.crop((0,0,400,66)).resize((xy(345),xy(94)),Image.Resampling.LANCZOS).convert('RGBA')
-    wood_mask=Image.new('L',left_wood.size,0); ImageDraw.Draw(wood_mask).rounded_rectangle((xy(8),xy(8),left_wood.width-xy(8),left_wood.height-xy(8)),radius=xy(10),fill=255)
-    wood_mask=wood_mask.filter(ImageFilter.GaussianBlur(xy(7))); left_wood.putalpha(wood_mask)
-    im.alpha_composite(left_wood,(xy(20),xy(50)))
-    # subtle wood-grain strokes across the small top-right reminder field
-    d=ImageDraw.Draw(im)
-    for j in range(6):
-        yy=xy(18+j*21); d.line((xy(570),yy,xy(735),yy+xy(4)),fill=(95,57+j,35+j,100),width=xy(1))
+    left_wood=src.crop((0,0,400,66)).resize((xy(325),xy(90)),Image.Resampling.LANCZOS).convert('RGBA')
+    wood_mask=Image.new('L',left_wood.size,0); ImageDraw.Draw(wood_mask).rectangle((xy(5),xy(5),left_wood.width-xy(5),left_wood.height-xy(5)),fill=255)
+    wood_mask=wood_mask.filter(ImageFilter.GaussianBlur(xy(2))); left_wood.putalpha(wood_mask)
+    im.alpha_composite(left_wood,(xy(40),xy(50)))
     # Notebook sheet, aligned to the original perspective; retain the clipboard border.
     paper=(246,247,241,255)
     page=Image.new('RGBA',(W,H),(0,0,0,0)); pd=ImageDraw.Draw(page)
@@ -389,16 +385,19 @@ def reminder():
             whiteness=min(r,g,b)
             if whiteness>246 and max(r,g,b)-min(r,g,b)<12: pix[xx,yy]=(r,g,b,0)
             elif whiteness>228 and max(r,g,b)-min(r,g,b)<18: pix[xx,yy]=(r,g,b,int(255*(246-whiteness)/18))
-    logo.thumbnail((xy(260),xy(82)),Image.Resampling.LANCZOS)
-    im.alpha_composite(logo,(xy(58),xy(68)))
-    # The former QR panel becomes a compact, text-only topic/date reminder.
+    logo.thumbnail((xy(235),xy(70)),Image.Resampling.LANCZOS)
+    im.alpha_composite(logo,(xy(58),xy(64)))
+    # Replace the template's AI/QR ad with a text-only topic reminder.
     d=ImageDraw.Draw(im)
-    d.text((xy(579),xy(20)),'TOPIC',font=F('oswald-bold.ttf',18),fill=(255,248,232,255),stroke_width=xy(1),stroke_fill=(45,28,20,255))
-    d.text((xy(579),xy(48)),'REMINDER',font=F('oswald-bold.ttf',22),fill=(255,248,232,255),stroke_width=xy(1),stroke_fill=(45,28,20,255))
-    d.text((xy(579),xy(84)),'15TH OCTOBER',font=F('montserrat-bold.ttf',12),fill=(255,248,232,255),stroke_width=xy(1),stroke_fill=(45,28,20,255))
+    d.text((xy(579),xy(17)),'TOPIC',font=F('oswald-bold.ttf',17),fill=(255,249,236,255),stroke_width=xy(1),stroke_fill=(45,29,21,255))
+    d.text((xy(579),xy(43)),'REMINDER',font=F('oswald-bold.ttf',19),fill=(255,249,236,255),stroke_width=xy(1),stroke_fill=(45,29,21,255))
+    d.text((xy(579),xy(76)),'15 OCTOBER',font=F('montserrat-bold.ttf',10),fill=(255,249,236,255),stroke_width=xy(1),stroke_fill=(45,29,21,255))
+    # The handwritten callout is preserved as a topic/date reminder.
+    rotated('15th October','lobster-regular.ttf',24,(52,49,47,255),(493,231),angle=10)
     # Original typographic hierarchy: condensed kicker, bold title, red script feature,
     # compact note, minister name and date/time. No minister photograph is used.
     rotated('IGNITE  •  TOPIC REMINDER','oswald-bold.ttf',18,(165,47,37,255),(270,284),angle=10)
+    rotated('TOPIC REMINDER','montserrat-bold.ttf',11,(35,35,35,255),(581,509),angle=10)
     rotated('THE GRACE','montserrat-black.ttf',48,(38,37,36,255),(346,374),angle=10)
     rotated('CALLED HONOUR!','montserrat-black.ttf',47,(38,37,36,255),(353,443),angle=10)
     rotated('A RETURN TO THE CULTURE OF HONOUR','montserrat-bold.ttf',21,(157,52,48,255),(354,504),angle=10)
